@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative '../../Utils/direction'
+require_relative '../../../Lib/Utils/direction'
 
 describe Direction do
   describe "turn_left" do
