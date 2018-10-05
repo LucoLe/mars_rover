@@ -1,50 +1,71 @@
 require './lib/utils/direction'
-require './lib/utils/point'
-require './lib/utils/grid_builder'
-require './lib/rover/driver'
 
 class MarsRover
-  def initialize(
-    position_we: 0,
-    position_ns: 0,
-    direction: Direction::NORTH,
-    grid_builder: GridBuilder.new
-  )
-    @point = Point.new(position_we: position_we, position_ns: position_ns, direction: direction)
-    @grid_builder = grid_builder
+  DEFAULT_WE_SIZE = 10
+  DEFAULT_NS_SIZE = 10
+  DEFAULT_GRID = Array.new(DEFAULT_WE_SIZE * DEFAULT_NS_SIZE, 0)
+  TURN_LEFT_COMMAND = 'L'
+  TURN_RIGHT_COMMAND = 'R'
+  MOVE_COMMAND = 'M'
+  KNOWN_COMMANDS = [TURN_LEFT_COMMAND, TURN_RIGHT_COMMAND, MOVE_COMMAND]
+
+  def initialize(position_we: 0, position_ns: 0, direction: Direction::NORTH, grid: DEFAULT_GRID)
+    @position_we = position_we
+    @position_ns = position_ns
+    @direction = direction
+    @grid = grid
   end
 
   def move(commands = '')
-    point = @point
-    commands = commands.split('')
+    position = { position_we: @position_we, position_ns: @position_ns, direction: @direction }
 
+    commands = commands.upcase.split('')
     commands.each do |command|
-      next_point = Driver.new.next_point(point, command)
-      normalized_point = normalize_point(@grid_builder, next_point)
-      obstacle = check_grid_point(@grid_builder, normalized_point)
-      return Point.new(point.coordinates, obstacle).to_s if obstacle
-
-      point = Point.new(normalized_point.coordinates)
+      next_position = next_position(position, command)
+      normalized_position = normalize_position(next_position)
+      obstacle = check_grid_point(@grid, normalized_position)
+      return "#{obstacle}, " + format_position(position) if obstacle
+      position = normalized_position
     end
 
-    point.to_s
+    format_position(position)
   end
 
-  private
+   private
 
-  def normalize_point(grid_builder, point)
-    position = point.coordinates
-    position_we = position[:position_we] % grid_builder.we_size
-    position_ns = position[:position_ns] % grid_builder.ns_size
+  def next_position(initial_position, command)
+    raise ArgumentError, "I don't know this command \"#{command}\"" unless
+      KNOWN_COMMANDS.include?(command)
 
-    Point.new(position_we: position_we, position_ns: position_ns, direction: position[:direction])
+    position_we = initial_position[:position_we]
+    position_ns = initial_position[:position_ns]
+    direction = initial_position[:direction]
+
+    direction = Direction.turn_left(direction) if command == TURN_LEFT_COMMAND
+    direction = Direction.turn_right(direction) if command == TURN_RIGHT_COMMAND
+    position_we += 1 if direction == Direction::EAST && command == MOVE_COMMAND
+    position_we -= 1 if direction == Direction::WEST && command == MOVE_COMMAND
+    position_ns -= 1 if direction == Direction::NORTH && command == MOVE_COMMAND
+    position_ns += 1 if direction == Direction::SOUTH && command == MOVE_COMMAND
+
+    { position_we: position_we, position_ns: position_ns, direction: direction }
   end
 
-  def check_grid_point(grid_builder, point)
-    position = point.coordinates
-    index = position[:position_we] + position[:position_ns] * grid_builder.we_size
-    return if grid_builder.grid[index] == grid_builder.terrain_symbol
+  def normalize_position(position)
+    position_we = position[:position_we] % DEFAULT_WE_SIZE
+    position_ns = position[:position_ns] % DEFAULT_NS_SIZE
 
-    grid_builder.grid[index]
+    { position_we: position_we, position_ns: position_ns, direction: position[:direction] }
   end
-end
+
+  def check_grid_point(grid, position)
+    index = position[:position_we] + position[:position_ns] * 10
+    return if grid[index] == 0
+
+    grid[index]
+  end
+
+  def format_position(position)
+    "#{position[:position_we]}, #{position[:position_ns]}, #{position[:direction]}"
+  end
+end 

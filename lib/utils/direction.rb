@@ -1,9 +1,9 @@
 class Direction
-  NORTH = 'N'.freeze
-  EAST = 'E'.freeze
-  SOUTH = 'S'.freeze
-  WEST = 'W'.freeze
-  CARDINAL_DIRECTIONS = [NORTH, EAST, SOUTH, WEST].freeze
+  NORTH = 'N'
+  EAST = 'E'
+  SOUTH = 'S'
+  WEST = 'W'
+  CARDINAL_DIRECTIONS = [NORTH, EAST, SOUTH, WEST]
 
   def self.turn_left(initial_direction)
     initial_direction = initial_direction.upcase
