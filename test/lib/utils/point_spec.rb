@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative '../../../Lib/Utils/point'
+require './lib/utils/point'
 
 describe Direction do
   it "returns properly formated coordinates when there is no obstacle" do

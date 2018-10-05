@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative '../../../Lib/Utils/grid_builder'
+require './lib/utils/grid_builder'
 
 describe GridBuilder do
   it "has some meaningful defaluts" do

@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative '../mars_rover'
+require './lib/mars_rover'
 
 #              Grid with obstacles
 #  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',

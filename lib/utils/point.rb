@@ -1,4 +1,4 @@
-require_relative 'direction'
+require './lib/utils/direction'
 
 class Point
   def initialize(coordinates = { position_we: 0, position_ns: 0, direction: Direction::NORTH }, obstacle = nil)

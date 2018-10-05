@@ -20,14 +20,20 @@ terminal window and run the following command to install minitest:
 gem install minitest
 ```
 
-To run all the tests provided execute the following command:
+You can use rake to simplify how you run tests. If you don't have Rake installed run:
 
 ```
-ruby test_runner.rb
+gem install rake
+```
+
+And then you can run all tests with:
+
+```
+rake test
 ```
 
 In order to run a single test file execute:
 
 ```
-ruby path/to/file.rb
+rake test path/to/file.rb
 ```

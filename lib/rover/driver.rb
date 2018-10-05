@@ -1,5 +1,5 @@
-require_relative '../Utils/point'
-require_relative '../Utils/direction'
+require './lib/utils/point'
+require './lib/utils/direction'
 
 class Driver
   DEFAULT_STEP_SIZE = 1

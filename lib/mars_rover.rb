@@ -1,7 +1,7 @@
-require_relative 'Lib/Utils/direction'
-require_relative 'Lib/Utils/point'
-require_relative 'Lib/Utils/grid_builder'
-require_relative 'Lib/Rover/driver'
+require './lib/utils/direction'
+require './lib/utils/point'
+require './lib/utils/grid_builder'
+require './lib/rover/driver'
 
 class MarsRover
   def initialize(

@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative '../../../Lib/Rover/driver'
+require './lib/rover/driver'
 
 describe Driver do
   describe "next_point" do
