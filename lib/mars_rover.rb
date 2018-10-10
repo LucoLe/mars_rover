@@ -1,50 +1,65 @@
-require './lib/utils/direction'
-require './lib/utils/point'
-require './lib/utils/grid_builder'
-require './lib/rover/driver'
 
 class MarsRover
-  def initialize(
-    position_we: 0,
-    position_ns: 0,
-    direction: Direction::NORTH,
-    grid_builder: GridBuilder.new
-  )
-    @point = Point.new(position_we: position_we, position_ns: position_ns, direction: direction)
-    @grid_builder = grid_builder
+  def initialize(starting_point, grid)
+    @directions = %w[N E S W]
+    @point = starting_point
+    @grid = grid
   end
 
-  def move(commands = '')
-    point = @point
-    commands = commands.split('')
+  def execute(commands)
+    commands.split('').each do |command|
+      turn_left if command == 'L'
+      turn_right if command == 'R'
+      next unless command == 'M'
 
-    commands.each do |command|
-      next_point = Driver.new.next_point(point, command)
-      normalized_point = normalize_point(@grid_builder, next_point)
-      obstacle = check_grid_point(@grid_builder, normalized_point)
-      return Point.new(point.coordinates, obstacle).to_s if obstacle
+      next_coordinates = next_coordinates()
+      obstacle = check_for_obstacle(next_coordinates[:x], next_coordinates[:y])
+      return "#{obstacle.symbol}, " + format_point if obstacle
 
-      point = Point.new(normalized_point.coordinates)
+      @point.x = next_coordinates[:x]
+      @point.y = next_coordinates[:y]
     end
 
-    point.to_s
+    format_point
   end
 
   private
 
-  def normalize_point(grid_builder, point)
-    position = point.coordinates
-    position_we = position[:position_we] % grid_builder.we_size
-    position_ns = position[:position_ns] % grid_builder.ns_size
-
-    Point.new(position_we: position_we, position_ns: position_ns, direction: position[:direction])
+  def turn_left
+    @point.direction = @directions[@directions.index(@point.direction) - 1]
   end
 
-  def check_grid_point(grid_builder, point)
-    position = point.coordinates
-    index = position[:position_we] + position[:position_ns] * grid_builder.we_size
-    return if grid_builder.grid[index] == grid_builder.terrain_symbol
+  def turn_right
+    @point.direction = @directions[(@directions.index(@point.direction) + 1) % 4]
+  end
 
-    grid_builder.grid[index]
+  def next_coordinates
+    x = @point.x
+    y = @point.y
+
+    case @point.direction
+    when 'E'
+      x += 1
+    when 'W'
+      x -= 1
+    when 'N'
+      y += 1
+    else
+      y -= 1
+    end
+
+    { x: x % @grid.size, y: y % @grid.size }
+  end
+
+  def check_for_obstacle(x, y)
+    return unless @grid.obstacles
+
+    @grid.obstacles.find do |obstacle|
+      x == obstacle.x && y == obstacle.y
+    end
+  end
+
+  def format_point
+    "#{@point.x}, #{@point.y}, #{@point.direction}"
   end
 end

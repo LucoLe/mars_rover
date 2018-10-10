@@ -1,94 +1,90 @@
 require 'minitest/autorun'
 require './lib/mars_rover'
 
-#              Grid with obstacles
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'Z', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'Z', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'V',
-#  'V', 'Z', 'V', 'V', 'V', 'V', 'V', 'V', 'V', 'Z'
+#    Grid with obstacles
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, O,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, X, 0, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, O, 0, 0, 0, 0, 0, 0, 0,
+# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-GRID_WITH_OBSTACLES = GridBuilder.new(terrain_symbol: 'V', obstacle_symbol: 'Z', obstacles_position: [12, 21, 91, 99]).freeze
-
-# Grid of different size
-#  0, 0, 0, 0, 0, 0, 0,
-#  0, 0, 0, X, 0, 0, 0,
-#  0, X, 0, 0, 0, 0, 0,
-#  0, 0, 0, 0, 0, 0, 0
-
-GRID_WITH_OBSTACLES_DIFFERENT_SIZE = GridBuilder.new(we_size: 7, ns_size: 4, obstacles_position: [10, 15]).freeze
+Point = Struct.new(:x, :y, :direction)
+Obstacle = Struct.new(:x, :y, :symbol)
+Grid = Struct.new(:size, :obstacles)
 
 describe MarsRover do
+  let(:mars_rover) { MarsRover.new(@starting_point, @grid) }
+
   describe "move on a grid without obstacles" do
     before do
-      @mars_rover = MarsRover.new
+      @starting_point = Point.new(0, 0, 'N')
+      @grid = Grid.new(10)
     end
 
-    it "returns default values when invoked without value" do
-      assert_equal @mars_rover.move, "0, 0, #{Direction::NORTH}"
+    it "returns starting point when commands are an empty string" do
+      mars_rover.execute('').must_equal '0, 0, N'
     end
 
-    it "accepts initial position of the rover" do
-      @mars_rover = MarsRover.new(position_we: 5, position_ns: 2, direction: Direction::SOUTH)
-      assert_equal @mars_rover.move, "5, 2, #{Direction::SOUTH}"
+    it "executes a set of commands" do
+      mars_rover.execute('RMMLM').must_equal '2, 1, N'
     end
 
     it "wraps around going in east direction" do
-      commands = 'R' + 'M' * 13
-      assert_equal @mars_rover.move(commands), "3, 0, #{Direction::EAST}"
+      @starting_point = Point.new(9, 0, 'E')
+      mars_rover.execute('M').must_equal '0, 0, E'
     end
 
     it "wraps around going in west direction" do
-      commands = 'L' + 'M' * 13
-      assert_equal @mars_rover.move(commands), "7, 0, #{Direction::WEST}"
+      @starting_point = Point.new(0, 0, 'W')
+      mars_rover.execute('M').must_equal '9, 0, W'
     end
 
     it "wraps around going in north direction" do
-      commands = 'M' * 13
-      assert_equal @mars_rover.move(commands), "0, 7, #{Direction::NORTH}"
+      @starting_point = Point.new(0, 0, 'S')
+      mars_rover.execute('M').must_equal '0, 9, S'
     end
 
     it "wraps around going in south direction" do
-      commands = 'LL' + 'M' * 13
-      assert_equal @mars_rover.move(commands), "0, 3, #{Direction::SOUTH}"
+      @starting_point = Point.new(0, 9, 'N')
+      mars_rover.execute('M').must_equal '0, 0, N'
     end
   end
 
   describe "move on a grid with obstacles" do
+    obstacles = [
+      Obstacle.new(2, 1, 'O'),
+      Obstacle.new(1, 2, 'X'),
+      Obstacle.new(9, 9, 'O')
+    ]
+
     before do
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
+      @starting_point = Point.new(0, 0, 'N')
+      @grid = Grid.new(10, obstacles)
     end
 
     it "reports last possible point and obstacle" do
-      assert_equal @mars_rover.move('RMMRM'), "Z, 2, 0, #{Direction::SOUTH}"
-
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
-      assert_equal @mars_rover.move('RRMLMM'), "Z, 1, 1, #{Direction::EAST}"
-      # The commands after the obstacle are ignored
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
-      assert_equal @mars_rover.move('RRMLMMM'), "Z, 1, 1, #{Direction::EAST}"
-
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
-      assert_equal @mars_rover.move('RMRMM'), "Z, 1, 1, #{Direction::SOUTH}"
-
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
-      assert_equal @mars_rover.move('MRM'), "Z, 0, 9, #{Direction::EAST}"
-
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES)
-      assert_equal @mars_rover.move('MLM'), "Z, 0, 9, #{Direction::WEST}"
+      @starting_point = Point.new(2, 0, 'N')
+      mars_rover.execute('M').must_equal 'O, 2, 0, N'
     end
 
-    it "works with grid of different size" do
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES_DIFFERENT_SIZE)
-      assert_equal @mars_rover.move('MMRMM'), "X, 0, 2, #{Direction::EAST}"
+    it "ignores the commands after the obstacle" do
+      @starting_point = Point.new(2, 0, 'N')
+      mars_rover.execute('MRM').must_equal 'O, 2, 0, N'
+    end
 
-      @mars_rover = MarsRover.new(grid_builder: GRID_WITH_OBSTACLES_DIFFERENT_SIZE)
-      assert_equal @mars_rover.move('LLMRMMMM'), "X, 4, 1, #{Direction::WEST}"
+    it "reads the obstacle symbol from the grid" do
+      @starting_point = Point.new(0, 2, 'E')
+      mars_rover.execute('M').must_equal 'X, 0, 2, E'
+    end
+
+    it "executes a set of commands" do
+      @starting_point = Point.new(0, 0, 'S')
+      mars_rover.execute('MRM').must_equal 'O, 0, 9, W'
     end
   end
 end
